@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Neo4j\Neo4jBundle\DependencyInjection;
 
-use GraphAware\Neo4j\OGM\EntityManager;
-use GraphAware\Neo4j\OGM\EntityManagerInterface;
 use Laudis\Neo4j\Network\Bolt\BoltDriver;
 use Laudis\Neo4j\Network\Http\HttpDriver;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -33,14 +31,7 @@ class Neo4jExtension extends Extension
         $loader->load('services.xml');
 
         $connectionUrls = $this->handleConnections($config);
-        $clientServiceIds = $this->handleClients($config, $container, $connectionUrls);
-
-        if ($this->validateEntityManagers($config)) {
-            $loader->load('entity_manager.xml');
-            $this->handleEntityManagers($config, $container, $clientServiceIds);
-            $container->setAlias('neo4j.entity_manager', 'neo4j.entity_manager.default');
-            $container->setAlias(EntityManagerInterface::class, 'neo4j.entity_manager.default');
-        }
+        $this->handleClients($config, $container, $connectionUrls);
 
         // add aliases for the default services
         $container->setAlias('neo4j.client', 'neo4j.client.default');
@@ -99,31 +90,6 @@ class Neo4jExtension extends Extension
         return $serviceIds;
     }
 
-    private function handleEntityManagers(array &$config, ContainerBuilder $container, array $clientServiceIds): array
-    {
-        $serviceIds = [];
-        foreach ($config['entity_managers'] as $name => $data) {
-            $serviceIds[] = $serviceId = sprintf('neo4j.entity_manager.%s', $name);
-            $clientName = $data['client'];
-            if (empty($clientServiceIds[$clientName])) {
-                throw new InvalidConfigurationException(sprintf('EntityManager "%s" is configured to use client named "%s" but there is no such client', $name, $clientName));
-            }
-
-            $definition = class_exists(ChildDefinition::class)
-                ? new ChildDefinition('neo4j.entity_manager.abstract')
-                : new DefinitionDecorator('neo4j.entity_manager.abstract');
-
-            $container
-                ->setDefinition($serviceId, $definition)
-                ->setArguments([
-                    $container->getDefinition($clientServiceIds[$clientName]),
-                    empty($data['cache_dir']) ? $container->getParameter('kernel.cache_dir').'/neo4j' : $data['cache_dir'],
-                ]);
-        }
-
-        return $serviceIds;
-    }
-
     /**
      * @return array with connection urls
      */
@@ -177,29 +143,5 @@ class Neo4jExtension extends Extension
         }
 
         return 'http' == $config['scheme'] ? HttpDriver::DEFAULT_PORT : BoltDriver::DEFAULT_TCP_PORT;
-    }
-
-    /**
-     * Make sure the EntityManager is installed if we have configured it.
-     *
-     * @param array &$config
-     *
-     * @return bool true if "graphaware/neo4j-php-ogm" is installed
-     *
-     * @thorws \LogicException if EntityManagers os not installed but they are configured.
-     */
-    private function validateEntityManagers(array &$config): bool
-    {
-        $dependenciesInstalled = class_exists(EntityManager::class);
-        $entityManagersConfigured = !empty($config['entity_managers']);
-
-        if ($dependenciesInstalled && !$entityManagersConfigured) {
-            // Add default entity manager if none set.
-            $config['entity_managers']['default'] = ['client' => 'default'];
-        } elseif (!$dependenciesInstalled && $entityManagersConfigured) {
-            throw new \LogicException('You need to install "graphaware/neo4j-php-ogm" to be able to use the EntityManager');
-        }
-
-        return $dependenciesInstalled;
     }
 }

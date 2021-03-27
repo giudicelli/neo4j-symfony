@@ -10,12 +10,6 @@ Via Composer
 $ composer require giudicelli/neo4j-bundle
 ```
 
-If you want to use the an `EntityManager` you need to install a [GraphAware OGM](https://github.com/giudicelli/neo4j-php-ogm)
-
-```bash
-$ composer require giudicelli/neo4j-php-ogm:@rc
-```
-
 Enable the bundle in your kernel:
 
 ``` php
@@ -33,12 +27,9 @@ public function registerBundles()
 
 ## Documentation
 
-The bundle is a convenient way of registering services. We register `Connections`, 
-`Clients` and `EntityManagers`. You will always have alias for the default services:
+The bundle is a convenient way of registering services. We register `Clients`. You will always have alias for the default service:
 
- * neo4j.connection
  * neo4j.client
- * neo4j.entity_manager.*
 
 
 ### Minimal configuration
@@ -52,7 +43,6 @@ neo4j:
 With the minimal configuration we have services named:
  * neo4j.connection.default
  * neo4j.client.default
- * neo4j.entity_manager.default*
 
 ### Full configuration
 
@@ -76,10 +66,6 @@ neo4j:
     other_client:
       connections: [second_connection]
     foobar: ~ # foobar client will have the "default" connection
-  entity_managers:
-    default: 
-      client: other_client # defaults to "default"
-      cache_dir: "%kernel.cache_dir%/neo4j" # defaults to system cache
 ```
 With the configuration above we would have services named:
  * neo4j.connection.default
@@ -87,10 +73,6 @@ With the configuration above we would have services named:
  * neo4j.client.default
  * neo4j.client.other_client
  * neo4j.client.other_foobar
- * neo4j.entity_manager.default*
-
-
-\* Note: EntityManagers will only be available if `giudicelli/neo4j-php-ogm` is installed. 
 
 ## Testing
 

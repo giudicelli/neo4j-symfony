@@ -19,15 +19,11 @@
         "laudis/neo4j-php-client": "^1.3",
         "symfony/dependency-injection": "^4.4 || ^5.0",
         "symfony/framework-bundle": "^4.4 || ^5.0",
-        "symfony/http-kernel": "^4.4 || ^5.0",
-        "twig/twig": "^2.0 || ^3.0"
+        "symfony/http-kernel": "^4.4 || ^5.0"
     },
     "require-dev": {
         "symfony/phpunit-bridge": "^4.4 || ^5.0",
         "matthiasnoback/symfony-dependency-injection-test": "^4.1"
-    },
-    "suggest": {
-        "giudicelli/neo4j-php-ogm": "To have EntityManager support"
     },
     "autoload": {
         "psr-4": {
