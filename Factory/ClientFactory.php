@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Neo4j\Neo4jBundle\Factory;
 
-use GraphAware\Neo4j\Client\Client;
-use GraphAware\Neo4j\Client\ClientInterface;
-use GraphAware\Neo4j\Client\Connection\ConnectionManager;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Laudis\Neo4j\ClientBuilder;
+use Laudis\Neo4j\Contracts\ClientInterface;
 
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
@@ -15,37 +13,35 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 final class ClientFactory
 {
     /**
-     * @var EventDispatcherInterface
+     * Build an Client form multiple connection.
+     *
+     * @param string $connectionUrls
      */
-    private $eventDispatcher;
-
-    /**
-     * @var ConnectionManager
-     */
-    private $connectionManager;
-
-    public function __construct(ConnectionManager $connectionManager, EventDispatcherInterface $eventDispatcher = null)
+    public function create(array $connectionUrls): ClientInterface
     {
-        $this->connectionManager = $connectionManager;
-        $this->eventDispatcher = $eventDispatcher;
+        // Add connections to connection manager
+        $firstName = null;
+        $clientBuilder = ClientBuilder::create();
+        foreach ($connectionUrls as $name => $url) {
+            if (null === $firstName || 'default' === $name) {
+                $firstName = $name;
+            }
+            if ($this->isHttp($url)) {
+                $clientBuilder->addHttpConnection($name, $url);
+            } else {
+                $clientBuilder->addBoltConnection($name, $url);
+            }
+        }
+        $clientBuilder->setDefaultConnection($firstName);
+
+        return $clientBuilder->build();
     }
 
     /**
-     * Build an Client form multiple connection.
-     *
-     * @param string $names
+     * Determnies if the URL is HTTP.
      */
-    public function create(array $names): ClientInterface
+    private function isHttp(string $url): bool
     {
-        // Create a new connection manager specific for this client
-        $clientConnectionManager = new ConnectionManager();
-        foreach ($names as $name) {
-            $clientConnectionManager->registerExistingConnection($name, $this->connectionManager->getConnection($name));
-        }
-
-        $firstName = reset($names);
-        $clientConnectionManager->setMaster($firstName);
-
-        return new Client($clientConnectionManager, $this->eventDispatcher);
+        return 'http' === parse_url($url, PHP_URL_SCHEME);
     }
 }

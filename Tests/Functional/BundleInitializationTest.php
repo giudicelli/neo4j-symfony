@@ -2,9 +2,8 @@
 
 namespace Neo4j\Neo4jBundle\Tests\Functional;
 
-use GraphAware\Neo4j\Client\ClientInterface;
-use GraphAware\Neo4j\Client\Connection\Connection;
 use GraphAware\Neo4j\OGM\EntityManager;
+use Laudis\Neo4j\Contracts\ClientInterface;
 
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
@@ -15,9 +14,6 @@ class BundleInitializationTest extends BaseTestCase
     {
         static::bootKernel();
         $container = static::$kernel->getContainer();
-        $this->assertTrue($container->has('neo4j.connection'));
-        $client = $container->get('neo4j.connection');
-        $this->assertInstanceOf(Connection::class, $client);
 
         $this->assertTrue($container->has('neo4j.client'));
         $client = $container->get('neo4j.client');

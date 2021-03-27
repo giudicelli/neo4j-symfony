@@ -17,30 +17,6 @@ class Neo4jExtensionTest extends AbstractExtensionTestCase
         return ['connections' => ['default' => ['port' => 7474]]];
     }
 
-    public function testDataCollectorLoaded()
-    {
-        $this->setParameter('kernel.debug', true);
-        $this->load();
-
-        $this->assertContainerBuilderHasService('neo4j.collector.debug_collector', 'Neo4j\Neo4jBundle\Collector\Neo4jDataCollector');
-    }
-
-    public function testDataCollectorNotLoadedInNonDebug()
-    {
-        $this->setParameter('kernel.debug', false);
-        $this->load();
-
-        $this->assertContainerBuilderNotHasService('neo4j.collector.debug_collector');
-    }
-
-    public function testDataCollectorNotLoadedWhenDisabled()
-    {
-        $this->setParameter('kernel.debug', true);
-        $this->load(['profiling' => ['enabled' => false]]);
-
-        $this->assertContainerBuilderNotHasService('neo4j.collector.debug_collector');
-    }
-
     protected function getContainerExtensions(): array
     {
         return [
@@ -52,7 +28,7 @@ class Neo4jExtensionTest extends AbstractExtensionTestCase
     {
         $this->setParameter('kernel.debug', false);
         $this->load();
-        $this->assertContainerBuilderHasServiceDefinitionWithArgument('neo4j.connection.default', 1, 'bolt://neo4j:neo4j@localhost:7474');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('neo4j.client.default', 0, ['default' => 'bolt://neo4j:neo4j@localhost:7474']);
     }
 
     public function testDsn()
@@ -65,6 +41,6 @@ class Neo4jExtensionTest extends AbstractExtensionTestCase
         ]];
 
         $this->load($config);
-        $this->assertContainerBuilderHasServiceDefinitionWithArgument('neo4j.connection.default', 1, 'bolt://foo:bar@localhost:7687');
+        $this->assertContainerBuilderHasServiceDefinitionWithArgument('neo4j.client.default', 0, ['default' => 'bolt://foo:bar@localhost:7687']);
     }
 }

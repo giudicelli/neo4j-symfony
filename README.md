@@ -1,24 +1,19 @@
 # Neo4j Symfony Bundle
 
-[![Latest Version](https://img.shields.io/github/release/neo4j-contrib/neo4j-symfony.svg?style=flat-square)](https://github.com/neo4j-contrib/neo4j-symfony/releases)
-[![Build Status](https://img.shields.io/travis/neo4j-contrib/neo4j-symfony/master.svg?style=flat-square)](https://travis-ci.org/neo4j-contrib/neo4j-symfony)
-[![Code Coverage](https://img.shields.io/scrutinizer/coverage/g/neo4j-contrib/neo4j-symfony.svg?style=flat-square)](https://scrutinizer-ci.com/g/neo4j-contrib/neo4j-symfony)
-[![Quality Score](https://img.shields.io/scrutinizer/g/neo4j-contrib/neo4j-symfony.svg?style=flat-square)](https://scrutinizer-ci.com/g/neo4j-contrib/neo4j-symfony)
-[![Total Downloads](https://img.shields.io/packagist/dt/neo4j/neo4j-bundle.svg?style=flat-square)](https://packagist.org/packages/neo4j/neo4j-bundle)
-
+This a fork of [Neo4j Symfony Bundle](https://github.com/neo4j-php/neo4j-symfony), it uses [Laudis Neo4j PHP Client](https://github.com/neo4j-php/neo4j-php-client) which is the only client [recommended by Neo4j](https://neo4j.com/developer/php/). We got rid of GraphAware, which was a mess.
 
 ## Install
 
 Via Composer
 
 ``` bash
-$ composer require neo4j/neo4j-bundle
+$ composer require giudicelli/neo4j-bundle
 ```
 
-If you want to use the an `EntityManager` you need to install a [GraphAware OGM](https://github.com/graphaware/neo4j-php-ogm)
+If you want to use the an `EntityManager` you need to install a [GraphAware OGM](https://github.com/giudicelli/neo4j-php-ogm)
 
 ```bash
-$ composer require graphaware/neo4j-php-ogm:@rc
+$ composer require giudicelli/neo4j-php-ogm:@rc
 ```
 
 Enable the bundle in your kernel:
@@ -63,8 +58,6 @@ With the minimal configuration we have services named:
 
 ```yaml
 neo4j:
-  profiling: 
-    enabled: true
   connections:
     default:
       scheme: bolt # default (must be either "http" or "bolt")
@@ -97,7 +90,7 @@ With the configuration above we would have services named:
  * neo4j.entity_manager.default*
 
 
-\* Note: EntityManagers will only be available if `graphaware/neo4j-php-ogm` is installed. 
+\* Note: EntityManagers will only be available if `giudicelli/neo4j-php-ogm` is installed. 
 
 ## Testing
 

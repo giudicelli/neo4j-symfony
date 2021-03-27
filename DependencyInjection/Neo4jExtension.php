@@ -4,20 +4,16 @@ declare(strict_types=1);
 
 namespace Neo4j\Neo4jBundle\DependencyInjection;
 
-use GraphAware\Bolt\Driver as BoltDriver;
-use GraphAware\Neo4j\Client\ClientInterface;
-use GraphAware\Neo4j\Client\Connection\Connection;
-use GraphAware\Neo4j\Client\HttpDriver\Driver as HttpDriver;
 use GraphAware\Neo4j\OGM\EntityManager;
 use GraphAware\Neo4j\OGM\EntityManagerInterface;
+use Laudis\Neo4j\Network\Bolt\BoltDriver;
+use Laudis\Neo4j\Network\Http\HttpDriver;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
@@ -36,8 +32,8 @@ class Neo4jExtension extends Extension
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
 
-        $this->handleConnections($config, $container);
-        $clientServiceIds = $this->handleClients($config, $container);
+        $connectionUrls = $this->handleConnections($config);
+        $clientServiceIds = $this->handleClients($config, $container, $connectionUrls);
 
         if ($this->validateEntityManagers($config)) {
             $loader->load('entity_manager.xml');
@@ -47,15 +43,8 @@ class Neo4jExtension extends Extension
         }
 
         // add aliases for the default services
-        $container->setAlias('neo4j.connection', 'neo4j.connection.default');
-        $container->setAlias(Connection::class, 'neo4j.connection.default');
         $container->setAlias('neo4j.client', 'neo4j.client.default');
         $container->setAlias(ClientInterface::class, 'neo4j.client.default');
-
-        // Configure toolbar
-        if ($this->isConfigEnabled($container, $config['profiling'])) {
-            $loader->load('data-collector.xml');
-        }
     }
 
     /**
@@ -77,7 +66,7 @@ class Neo4jExtension extends Extension
     /**
      * @return array with service ids
      */
-    private function handleClients(array &$config, ContainerBuilder $container): array
+    private function handleClients(array &$config, ContainerBuilder $container, array $connectionUrls): array
     {
         if (empty($config['clients'])) {
             // Add default entity manager if none set.
@@ -89,13 +78,13 @@ class Neo4jExtension extends Extension
             $connections = [];
             $serviceIds[$name] = $serviceId = sprintf('neo4j.client.%s', $name);
             foreach ($data['connections'] as $connectionName) {
-                if (empty($config['connections'][$connectionName])) {
+                if (empty($connectionUrls[$connectionName])) {
                     throw new InvalidConfigurationException(sprintf('Client "%s" is configured to use connection named "%s" but there is no such connection', $name, $connectionName));
                 }
-                $connections[] = $connectionName;
+                $connections[$connectionName] = $connectionUrls[$connectionName];
             }
             if (empty($connections)) {
-                $connections[] = 'default';
+                $connections['default'] = $config['connections']['default'];
             }
 
             $definition = class_exists(ChildDefinition::class)
@@ -136,21 +125,17 @@ class Neo4jExtension extends Extension
     }
 
     /**
-     * @return array with service ids
+     * @return array with connection urls
      */
-    private function handleConnections(array &$config, ContainerBuilder $container): array
+    private function handleConnections(array &$config): array
     {
-        $serviceIds = [];
+        $connectionUrls = [];
         $firstName = null;
         foreach ($config['connections'] as $name => $data) {
             if (null === $firstName || 'default' === $name) {
                 $firstName = $name;
             }
-            $def = new Definition(Connection::class);
-            $def->addArgument($name);
-            $def->addArgument($this->getUrl($data));
-            $serviceIds[$name] = $serviceId = 'neo4j.connection.'.$name;
-            $container->setDefinition($serviceId, $def);
+            $connectionUrls[$name] = $this->getUrl($data);
         }
 
         // Make sure we got a 'default'
@@ -158,14 +143,7 @@ class Neo4jExtension extends Extension
             $config['connections']['default'] = $config['connections'][$firstName];
         }
 
-        // Add connections to connection manager
-        $connectionManager = $container->getDefinition('neo4j.connection_manager');
-        foreach ($serviceIds as $name => $serviceId) {
-            $connectionManager->addMethodCall('registerExistingConnection', [$name, new Reference($serviceId)]);
-        }
-        $connectionManager->addMethodCall('setMaster', [$firstName]);
-
-        return $serviceIds;
+        return $connectionUrls;
     }
 
     /**
@@ -198,7 +176,7 @@ class Neo4jExtension extends Extension
             return $config['port'];
         }
 
-        return 'http' == $config['scheme'] ? HttpDriver::DEFAULT_HTTP_PORT : BoltDriver::DEFAULT_TCP_PORT;
+        return 'http' == $config['scheme'] ? HttpDriver::DEFAULT_PORT : BoltDriver::DEFAULT_TCP_PORT;
     }
 
     /**
