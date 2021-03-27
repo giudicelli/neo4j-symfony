@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Neo4j\Neo4jBundle\DependencyInjection;
 
+use Laudis\Neo4j\Contracts\ClientInterface;
 use Laudis\Neo4j\Network\Bolt\BoltDriver;
 use Laudis\Neo4j\Network\Http\HttpDriver;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
