@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Neo4j\Neo4jBundle\DependencyInjection;
 
-use Laudis\Neo4j\Contracts\ClientInterface;
 use Laudis\Neo4j\Network\Bolt\BoltDriver;
 use Laudis\Neo4j\Network\Http\HttpDriver;
+use Neo4j\OGM\NodeManager;
+use Neo4j\OGM\NodeManagerInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
@@ -34,9 +35,37 @@ class Neo4jExtension extends Extension
         $connectionUrls = $this->handleConnections($config);
         $this->handleClients($config, $container, $connectionUrls);
 
-        // add aliases for the default services
-        $container->setAlias('neo4j.client', 'neo4j.client.default');
-        $container->setAlias(ClientInterface::class, 'neo4j.client.default');
+        if ($this->validateNodeManagers($config)) {
+            $loader->load('node_manager.xml');
+            $this->handleNodeManagers($config, $container);
+        }
+    }
+
+    private function handleNodeManagers(array &$config, ContainerBuilder $container): void
+    {
+        if (!empty($config['cache_dir'])) {
+            $container->getDefinition('neo4j.ogm.metadata_cache')->replaceArgument(0, $config['cache_dir']);
+            $container->getDefinition('neo4j.ogm.proxy_factory')->replaceArgument(0, $config['cache_dir']);
+        }
+
+        foreach ($config['node_managers'] as $name => $data) {
+            $serviceId = sprintf('neo4j.ogm.node_manager.%s', $name);
+            $clientName = sprintf('neo4j.client.%s', $data['client']);
+            if (!$container->hasDefinition($clientName)) {
+                throw new InvalidConfigurationException(sprintf('NodeManager "%s" is configured to use client named "%s" but there is no such client', $name, $clientName));
+            }
+
+            $definition = new ChildDefinition('neo4j.ogm.node_manager.abstract');
+            $container
+                ->setDefinition($serviceId, $definition)
+                ->replaceArgument(0, new Reference($clientName));
+        }
+        if (!$container->hasDefinition('neo4j.ogm.node_manager.default')) {
+            throw new InvalidConfigurationException(sprintf('You need to create a "default" "node_manager"', $name, $clientName));
+        }
+
+        $container->setAlias('neo4j.ogm.node_manager', 'neo4j.ogm.node_manager.default');
+        $container->setAlias(NodeManagerInterface::class, 'neo4j.ogm.node_manager.default');
     }
 
     /**
@@ -58,17 +87,16 @@ class Neo4jExtension extends Extension
     /**
      * @return array with service ids
      */
-    private function handleClients(array &$config, ContainerBuilder $container, array $connectionUrls): array
+    private function handleClients(array &$config, ContainerBuilder $container, array $connectionUrls): void
     {
         if (empty($config['clients'])) {
-            // Add default entity manager if none set.
+            // Add default client if none set.
             $config['clients']['default'] = ['connections' => ['default']];
         }
 
-        $serviceIds = [];
         foreach ($config['clients'] as $name => $data) {
             $connections = [];
-            $serviceIds[$name] = $serviceId = sprintf('neo4j.client.%s', $name);
+            $serviceId = sprintf('neo4j.client.%s', $name);
             foreach ($data['connections'] as $connectionName) {
                 if (empty($connectionUrls[$connectionName])) {
                     throw new InvalidConfigurationException(sprintf('Client "%s" is configured to use connection named "%s" but there is no such connection', $name, $connectionName));
@@ -79,16 +107,15 @@ class Neo4jExtension extends Extension
                 $connections['default'] = $config['connections']['default'];
             }
 
-            $definition = class_exists(ChildDefinition::class)
-                ? new ChildDefinition('neo4j.client.abstract')
-                : new DefinitionDecorator('neo4j.client.abstract');
-
+            $definition = new ChildDefinition('neo4j.client.abstract');
             $container
                 ->setDefinition($serviceId, $definition)
                 ->setArguments([$connections]);
         }
 
-        return $serviceIds;
+        // add aliases for the default services
+        $container->setAlias('neo4j.client', 'neo4j.client.default');
+        $container->setAlias(ClientInterface::class, 'neo4j.client.default');
     }
 
     /**
@@ -144,5 +171,29 @@ class Neo4jExtension extends Extension
         }
 
         return 'http' == $config['scheme'] ? HttpDriver::DEFAULT_PORT : BoltDriver::DEFAULT_TCP_PORT;
+    }
+
+    /**
+     * Make sure the NodeManager is installed if we have configured it.
+     *
+     * @param array &$config
+     *
+     * @return bool true if "giudicelli/neo4j-php-ogm" is installed
+     *
+     * @thorws \LogicException if NodeManager is not installed but they are configured.
+     */
+    private function validateNodeManagers(array &$config): bool
+    {
+        $dependenciesInstalled = class_exists(NodeManager::class);
+        $nodeManagersConfigured = !empty($config['node_managers']);
+
+        if ($dependenciesInstalled && !$nodeManagersConfigured) {
+            // Add default entity manager if none set.
+            $config['node_managers']['default'] = ['client' => 'default'];
+        } elseif (!$dependenciesInstalled && $nodeManagersConfigured) {
+            throw new \LogicException('You need to install "giudicelli/neo4j-php-ogm" to be able to use the NodeManager');
+        }
+
+        return $dependenciesInstalled;
     }
 }

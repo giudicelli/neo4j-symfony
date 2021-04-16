@@ -48,6 +48,7 @@ class Configuration implements ConfigurationInterface
         }
 
         $root->children()
+            ->scalarNode('cache_dir')->defaultNull()->end()
             ->arrayNode('clients')
                 ->requiresAtLeastOneElement()
                 ->useAttributeAsKey('name')
@@ -58,6 +59,15 @@ class Configuration implements ConfigurationInterface
                     ->arrayNode('connections')
                         ->prototype('scalar')->end()
                     ->end()
+                ->end()
+            ->end()->end()
+            ->arrayNode('node_managers')
+                ->requiresAtLeastOneElement()
+                ->useAttributeAsKey('name')
+                ->prototype('array')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->scalarNode('client')->defaultValue('default')->end()
                 ->end()
             ->end()->end()
             ->arrayNode('connections')

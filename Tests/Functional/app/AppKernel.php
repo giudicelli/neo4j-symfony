@@ -71,7 +71,7 @@ class PublicServicesForFunctionalTestsPass implements CompilerPassInterface
         $aliases = [
             'neo4j.connection',
             'neo4j.client',
-            'neo4j.entity_manager',
+            'neo4j.ogm.node_manager',
         ];
         foreach ($aliases as $alias) {
             if ($container->hasAlias($alias)) {

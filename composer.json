@@ -12,6 +12,9 @@
         {
             "name": "Xavier Coureau",
             "email": "xavier@pandawan-technology.com"
+        },
+        {
+            "name": "Frédéric Giudicelli"
         }
     ],
     "require": {
@@ -22,8 +25,12 @@
         "symfony/http-kernel": "^4.4 || ^5.0"
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "^4.4 || ^5.0",
-        "matthiasnoback/symfony-dependency-injection-test": "^4.1"
+        "giudicelli/neo4j-php-ogm": "^0.1.0",
+        "matthiasnoback/symfony-dependency-injection-test": "^4.1",
+        "symfony/phpunit-bridge": "^5.2"
+    },
+    "suggest": {
+        "giudicelli/neo4j-php-ogm": "To have NodeManager support"
     },
     "autoload": {
         "psr-4": {
@@ -32,6 +39,9 @@
     },
     "config": {
         "sort-packages": true
+    },
+    "copy-from-package": {
+        "Resources/config/neo4j.yaml": "%CONFIG_DIR%/"
     },
     "scripts": {
         "test": "vendor/bin/simple-phpunit",

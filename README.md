@@ -10,6 +10,12 @@ Via Composer
 $ composer require giudicelli/neo4j-bundle
 ```
 
+If you want to use the an `NodeManager` you need to install an [OGM](https://github.com/giudicelli/neo4j-php-ogm)
+
+```bash
+$ composer require giudicelli/neo4j-php-ogm
+```
+
 Enable the bundle in your kernel:
 
 ``` php
@@ -30,7 +36,7 @@ public function registerBundles()
 The bundle is a convenient way of registering services. We register `Clients`. You will always have alias for the default service:
 
  * neo4j.client
-
+ * neo4j.node_manager.*
 
 ### Minimal configuration
 
@@ -43,11 +49,13 @@ neo4j:
 With the minimal configuration we have services named:
  * neo4j.connection.default
  * neo4j.client.default
+ * neo4j.node_manager.default*
 
 ### Full configuration
 
 ```yaml
 neo4j:
+  cache_dir: "%kernel.cache_dir%"
   connections:
     default:
       scheme: bolt # default (must be either "http" or "bolt")
@@ -66,24 +74,23 @@ neo4j:
     other_client:
       connections: [second_connection]
     foobar: ~ # foobar client will have the "default" connection
+  entity_managers:
+    default: 
+      client: other_client # defaults to "default"
 ```
 With the configuration above we would have services named:
- * neo4j.connection.default
- * neo4j.connection.second_connection
  * neo4j.client.default
  * neo4j.client.other_client
  * neo4j.client.other_foobar
+ * neo4j.node_manager.default*
+
+\* Note: NodeManager will only be available if `giudicelli/neo4j-php-ogm` is installed. 
 
 ## Testing
 
 ``` bash
 $ composer test
 ```
-
-## Example application
-
-See an example application at https://github.com/neo4j-examples/movies-symfony-php-bolt
-
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE) for more information.

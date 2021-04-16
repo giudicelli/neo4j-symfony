@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <defaults autowire="true" autoconfigure="true"/>
+        <service id="neo4j.ogm.metadata_cache" class="Neo4j\OGM\Metadata\Cache\MetadataCache">
+            <argument>%kernel.cache_dir%</argument>
+        </service>
+        <service id="Neo4j\OGM\Metadata\Cache\MetadataCacheInterface" alias="neo4j.ogm.metadata_cache">
+        </service>
+
+        <service id="neo4j.ogm.proxy_factory" class="Neo4j\OGM\Proxy\ProxyFactory">
+            <argument>%kernel.cache_dir%</argument>
+        </service>
+        <service id="Neo4j\OGM\Proxy\ProxyFactoryInterface" alias="neo4j.ogm.proxy_factory">
+        </service>
+
+
+        <service id="neo4j.ogm.query_builder" class="Neo4j\OGM\QueryBuilder\QueryBuilder">
+        </service>
+        <service id="Neo4j\OGM\QueryBuilder\QueryBuilderInterface" alias="neo4j.ogm.query_builder">
+        </service>
+        
+        <service id="neo4j.ogm.hydrator" class="Neo4j\OGM\Hydrator\Hydrator">
+        </service>
+        <service id="Neo4j\OGM\Hydrator\HydratorInterface" alias="neo4j.ogm.hydrator">
+        </service>
+        
+        <service id="neo4j.ogm.nodes_cache" class="Neo4j\OGM\NodesCache\NodesCache">
+        </service>
+        <service id="Neo4j\OGM\NodesCache\NodesCacheInterface" alias="neo4j.ogm.nodes_cache">
+        </service>
+        
+        <service id="neo4j.ogm.node_manager.abstract" class="Neo4j\OGM\NodeManager" abstract="true">
+            <argument />
+        </service>
+    </services>
+</container>
