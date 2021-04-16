@@ -29,6 +29,9 @@
         "matthiasnoback/symfony-dependency-injection-test": "^4.1",
         "symfony/phpunit-bridge": "^5.2"
     },
+    "conflict": {
+        "neo4j/neo4j-bundle": "*"
+    },
     "suggest": {
         "giudicelli/neo4j-php-ogm": "To have NodeManager support"
     },
