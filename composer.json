@@ -40,9 +40,6 @@
     "config": {
         "sort-packages": true
     },
-    "copy-from-package": {
-        "Resources/config/neo4j.yaml": "%CONFIG_DIR%/"
-    },
     "scripts": {
         "test": "vendor/bin/simple-phpunit",
         "test-ci": "vendor/bin/simple-phpunit --coverage-text --coverage-clover=build/coverage.xml"
