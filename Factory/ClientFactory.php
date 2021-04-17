@@ -14,16 +14,14 @@ final class ClientFactory
 {
     /**
      * Build an Client form multiple connection.
-     *
-     * @param string $connectionUrls
      */
     public function create(array $connectionUrls): ClientInterface
     {
         // Add connections to connection manager
-        $firstName = null;
+        $firstName = '';
         $clientBuilder = ClientBuilder::create();
         foreach ($connectionUrls as $name => $url) {
-            if (null === $firstName || 'default' === $name) {
+            if (!$firstName || 'default' === $name) {
                 $firstName = $name;
             }
             if ($this->isHttp($url)) {

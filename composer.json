@@ -27,7 +27,8 @@
     "require-dev": {
         "giudicelli/neo4j-php-ogm": "^0.1.0",
         "matthiasnoback/symfony-dependency-injection-test": "^4.1",
-        "symfony/phpunit-bridge": "^5.2"
+        "symfony/phpunit-bridge": "^5.2",
+        "vimeo/psalm": "^4.7"
     },
     "conflict": {
         "neo4j/neo4j-bundle": "*"

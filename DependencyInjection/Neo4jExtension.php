@@ -61,7 +61,7 @@ class Neo4jExtension extends Extension
                 ->replaceArgument(0, new Reference($clientName));
         }
         if (!$container->hasDefinition('neo4j.ogm.node_manager.default')) {
-            throw new InvalidConfigurationException(sprintf('You need to create a "default" "node_manager"', $name, $clientName));
+            throw new InvalidConfigurationException('You need to create a "default" "node_manager"');
         }
 
         $container->setAlias('neo4j.ogm.node_manager', 'neo4j.ogm.node_manager.default');
@@ -73,7 +73,7 @@ class Neo4jExtension extends Extension
      */
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration
     {
-        return new Configuration($container->getParameter('kernel.debug'));
+        return new Configuration($container->getParameter('kernel.debug') ? true : false);
     }
 
     /**
@@ -84,9 +84,6 @@ class Neo4jExtension extends Extension
         return 'neo4j';
     }
 
-    /**
-     * @return array with service ids
-     */
     private function handleClients(array &$config, ContainerBuilder $container, array $connectionUrls): void
     {
         if (empty($config['clients'])) {
@@ -170,7 +167,7 @@ class Neo4jExtension extends Extension
             return $config['port'];
         }
 
-        return 'http' == $config['scheme'] ? HttpDriver::DEFAULT_PORT : BoltDriver::DEFAULT_TCP_PORT;
+        return 'http' == $config['scheme'] ? intval(HttpDriver::DEFAULT_PORT) : BoltDriver::DEFAULT_TCP_PORT;
     }
 
     /**
